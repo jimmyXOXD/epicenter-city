@@ -29,6 +29,8 @@ jobs:
 
       # Step 4: Run your specific Mac build command
       - name: Build with Electron Builder
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run build -- --mac
 
       # Step 5: Save the output so you can download it!
