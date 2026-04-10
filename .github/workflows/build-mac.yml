@@ -1,0 +1,42 @@
+name: Build Mac Version
+
+# This tells GitHub to run this script whenever you push code to the 'main' branch,
+# AND it adds a button so you can trigger it manually.
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch: 
+
+jobs:
+  build-mac:
+    # This is the magic line. It tells GitHub to spin up a Mac server.
+    runs-on: macos-latest 
+
+    steps:
+      # Step 1: Download your code onto the Mac server
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      # Step 2: Install Node.js
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20 # Use the version of Node you are currently using
+
+      # Step 3: Install your game's dependencies (electron, etc.)
+      - name: Install Dependencies
+        run: npm install
+
+      # Step 4: Run your specific Mac build command
+      - name: Build with Electron Builder
+        run: npm run build -- --mac
+
+      # Step 5: Save the output so you can download it!
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EPICENTER-CITY-Mac-Build
+          # This tells GitHub to grab everything inside the dist folder that ends in .dmg or .zip
+          path: |
+            dist/*.dmg
+            dist/*.zip
