@@ -1,0 +1,72 @@
+[
+  {
+    "houses":"Street Corner",
+    "description":"Just a sleeping bag on the pavement.",
+    "level":1,
+    "cost (k)":0,
+    "popularity gained":0
+  },
+  {
+    "houses":"Cheap Motel",
+    "description":"A dingy, pay-by-the-day room with a flickering TV.",
+    "level":2,
+    "cost (k)":50,
+    "popularity gained":1
+  },
+  {
+    "houses":"Trailer Park Home",
+    "description":"A cramped mobile home. It's not much, but it has a locking door.",
+    "level":3,
+    "cost (k)":150,
+    "popularity gained":2
+  },
+  {
+    "houses":"Studio Apartment",
+    "description":"A single room with a bed right next to the kitchen sink.",
+    "level":4,
+    "cost (k)":350,
+    "popularity gained":3
+  },
+  {
+    "houses":"Suburban House",
+    "description":"A standard 3-bedroom house with a small yard.",
+    "level":5,
+    "cost (k)":600,
+    "popularity gained":4
+  },
+  {
+    "houses":"Downtown Loft",
+    "description":"A trendy, open-plan apartment in the city center.",
+    "level":6,
+    "cost (k)":900,
+    "popularity gained":5
+  },
+  {
+    "houses":"Luxury Condo",
+    "description":"A high-rise apartment with a doorman and a view.",
+    "level":7,
+    "cost (k)":1500,
+    "popularity gained":6
+  },
+  {
+    "houses":"Mansion",
+    "description":"A massive home with a pool and high walls.",
+    "level":8,
+    "cost (k)":5000,
+    "popularity gained":7
+  },
+  {
+    "houses":"Private Estate",
+    "description":"A sprawling compound with security guards and acres of land.",
+    "level":9,
+    "cost (k)":15000,
+    "popularity gained":8
+  },
+  {
+    "houses":"Mega-Penthouse",
+    "description":"The entire top floor of the city's tallest skyscraper.",
+    "level":10,
+    "cost (k)":50000,
+    "popularity gained":10
+  }
+]
