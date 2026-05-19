@@ -23,9 +23,12 @@ export class Business {
         };
 
         this.investmentBank = 0;
+        this.playerInitialInvestment = 0;
         this.percentOwned = 100 / founders.length;
         this.stage = 1;
         this.totalProductsSold = 0;
+        this.salesByStage = Array(8).fill(0); // Track products sold at each stage for revenue calculations
+        this.operatingTimeMs = 0; // Time spent in active stage >= 2 for expense accounting
         this.lifespan = 20 * 60 * 1000; // 20 minutes in ms
         this.startTime = Date.now();
         this.accTime = 0; // For sales tick
@@ -77,6 +80,7 @@ export class Business {
         while (this.accTime >= tickRate) {
             this.accTime -= tickRate;
             if (this.stage >= 2) {
+                this.operatingTimeMs += tickRate * 1000;
                 this.processSalesTick(statsManager);
             }
         }
@@ -155,6 +159,7 @@ export class Business {
             // 5. Roll for Sale
             if (CONFIG.UTILS.random() < chance) {
                 this.totalProductsSold++;
+                this.salesByStage[this.stage] = (this.salesByStage[this.stage] || 0) + 1;
                 this.salesSinceLastCheck++;
                 
                 // Realistic Milestone Popularity System
@@ -224,6 +229,44 @@ export class Business {
         return Math.max(0, this.lifespan - elapsed);
     }
 
+    getOpenDurationMs() {
+        return Math.min(this.operatingTimeMs, this.lifespan);
+    }
+
+    getOpenMonths() {
+        return Math.floor(this.getOpenDurationMs() / 1000); // 1 second = 1 month in game time
+    }
+
+    getGrossRevenue() {
+        const tierName = this.marketTier ? this.marketTier.name.toUpperCase() : 'STANDARD';
+        const priceArray = CONFIG.BUSINESS[`PRICES_${tierName}`] || [0, 1];
+        return this.salesByStage.reduce((total, count, stage) => {
+            if (stage <= 0) return total;
+            const price = priceArray[stage] || 1;
+            return total + count * price;
+        }, 0);
+    }
+
+    getPlayerRevenue() {
+        return this.getGrossRevenue() * (this.percentOwned / 100);
+    }
+
+    getRefundAmount() {
+        return Math.max(0, this.playerInitialInvestment - this.getNetExpenses());
+    }
+
+    getNetExpenses() {
+        const monthlyCost = CONFIG.BUSINESS.OPERATING_COST || 0;
+        const rawExpenses = monthlyCost * this.getOpenMonths();
+        const investorCoverage = this.investorFundsReceived || 0;
+        const grossNetExpenses = Math.max(0, rawExpenses - investorCoverage);
+        return Math.min(this.playerInitialInvestment, grossNetExpenses);
+    }
+
+    getNetProfit() {
+        return this.getPlayerRevenue() - this.getNetExpenses();
+    }
+
     getStageName() {
         const names = {
             1: "Preparation",
@@ -237,8 +280,13 @@ export class Business {
         return names[this.stage] || "Automation";
     }
 
-    addCapital(amount) {
+    addCapital(amount, isPlayer = true) {
         this.investmentBank += amount;
+        if (isPlayer) {
+            this.playerInitialInvestment += amount;
+        } else {
+            this.investorFundsReceived += amount;
+        }
     }
 
     diluteOwnership(equityTakenPercent) {
