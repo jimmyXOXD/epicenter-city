@@ -669,6 +669,17 @@
         </div>
     </div>
 
+    <!-- New Game Warning Modal -->
+    <div id="new-game-warning" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: rgba(15, 10, 25, 0.95); border: 2px solid #aa44ff; border-radius: 10px; padding: 20px; text-align: center; color: white; font-family: 'Orbitron', sans-serif; max-width: 400px; box-shadow: 0 0 20px rgba(170, 68, 255, 0.5);">
+            <h2 style="color: #aa44ff; margin-bottom: 15px;">WARNING</h2>
+            <p style="margin-bottom: 20px; font-size: 14px;">Starting a new game will delete your existing save file. Are you sure you want to proceed?</p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button id="confirm-new-game" style="background: #aa44ff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-family: 'Orbitron', sans-serif; font-size: 12px;">YES, START NEW GAME</button>
+                <button id="cancel-new-game" style="background: rgba(170, 68, 255, 0.2); color: #aa44ff; border: 1px solid #aa44ff; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-family: 'Orbitron', sans-serif; font-size: 12px;">CANCEL</button>
+            </div>
+        </div>
+    </div>
 
     <div id="speed-controls" style="position: absolute; top: 2vh; right: 2vw; display: flex; gap: 1vw; z-index: 100; pointer-events: auto; background: rgba(15, 10, 25, 0.85); padding: 1vh 1vw; border-radius: 1.2vh; border: 0.15vh solid rgba(170, 68, 255, 0.3); box-shadow: 0 0.8vh 3.2vh rgba(170, 68, 255, 0.15); backdrop-filter: blur(10px);">
         <button id="btn-main-menu" title="Main Menu" style="width: 45px; height: 45px; background: rgba(170, 68, 255, 0.15); border: 1.5px solid rgba(170, 68, 255, 0.6); color: #aa44ff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 28px; transition: all 0.3s ease; box-shadow: 0 0 15px rgba(170, 68, 255, 0.2); border-radius: 10px; font-family: 'Orbitron', sans-serif;">≡</button>
@@ -687,7 +698,7 @@
 
     <!-- College Dashboard -->
     <div id="college-dashboard" style="display: none; position: absolute; bottom: 24vh; right: 2vw; width: min(22rem, 36vw); background: rgba(0, 0, 0, 0.85); border: 0.2vh solid #aa44ff; border-radius: 1.2vh; padding: 1.2vh 1.2vw; color: white; z-index: 70; font-family: 'Orbitron', sans-serif; box-shadow: 0 0 1.5vh rgba(170, 68, 255, 0.2);">
-        <div style="text-align: center; color: #aa44ff; font-weight: bold; border-bottom: 1px solid #555; padding-bottom: 5px; margin-bottom: 5px;">NEO-UNIVERSITY</div>
+        <div style="text-align: center; color: #aa44ff; font-weight: bold; border-bottom: 1px solid #555; padding-bottom: 5px; margin-bottom: 5px;">UNIVERSITY</div>
         <div style="font-size: 12px; color: #ccc; margin-bottom: 5px;">Degree Progress</div>
         <div class="dash-progress-container">
             <div id="college-progress-bar" class="dash-progress-bar" style="width: 0%; background: #aa44ff;"></div>
@@ -793,8 +804,8 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; text-align: left; background: rgba(0,255,0,0.1); padding: 10px; border-radius: 5px;">
                 <div>NET WORTH: <span id="invest-net-worth" style="color: #ffffff; font-weight: bold;">0.00</span></div>
                 <div>LIQUID CASH: <span id="invest-cash" style="color: #44ff44; font-weight: bold;">0.00</span></div>
-                <div>BONDS: <span id="invest-bonds" style="color: #ffff44;">0.00</span></div>
-                <div>STOCKS: <span id="invest-stocks" style="color: #ff44ff;">0.00</span></div>
+                <div>BONDS: <span id="invest-bonds" style="color: cyan; font-weight: bold;">0.00</span></div>
+                <div>STOCKS: <span id="invest-stocks" style="color: blueviolet; font-weight: bold;">0.00</span></div>
             </div>
 
             <div style="margin-bottom: 20px;">
@@ -802,18 +813,27 @@
             </div>
 
             <div style="margin-bottom: 20px;">
-                <label for="invest-slider" style="display: block; margin-bottom: 5px;">Amount to Invest: <span id="invest-amount-display" style="color: #44ff44; font-weight: bold;">0.00</span></label>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <label for="invest-slider" style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span>Amount to Invest:</span>
+                        <span id="invest-amount-display" style="color: #44ff44; font-weight: bold;">0.00</span>
+                    </label>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="color: #88ff88; opacity: 0.85;">Remaining Cash:</span>
+                        <span id="remaining-cash-display" style="color: #88ff88; font-weight: bold;">0.00</span>
+                    </div>
+                </div>
                 <input type="range" id="invest-slider" min="0" max="100" value="0" step="0.01" style="width: 100%; accent-color: #44ff44; cursor: pointer;">
             </div>
 
             <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px;">
-                <button id="btn-buy-bonds" style="padding: 10px; flex: 1; background: #ffff44; color: black; border: none; font-family: 'Orbitron'; font-weight: bold; cursor: pointer;">BUY BONDS</button>
-                <button id="btn-buy-stocks" style="padding: 10px; flex: 1; background: #ff44ff; color: black; border: none; font-family: 'Orbitron'; font-weight: bold; cursor: pointer;">BUY STOCKS</button>
+                <button id="btn-buy-bonds" style="padding: 10px; flex: 1; background: cyan; color: black; border: none; font-family: 'Orbitron'; font-weight: bold; cursor: pointer;">BUY BONDS</button>
+                <button id="btn-buy-stocks" style="padding: 10px; flex: 1; background: purple; color: black; border: none; font-family: 'Orbitron'; font-weight: bold; cursor: pointer;">BUY STOCKS</button>
             </div>
 
             <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 20px;">
-                <button id="btn-sell-bonds" style="padding: 10px; flex: 1; background: #333; color: #ffff44; border: 1px solid #ffff44; font-family: 'Orbitron'; cursor: pointer;">SELL ALL BONDS</button>
-                <button id="btn-sell-stocks" style="padding: 10px; flex: 1; background: #333; color: #ff44ff; border: 1px solid #ff44ff; font-family: 'Orbitron'; cursor: pointer;">SELL ALL STOCKS</button>
+                <button id="btn-sell-bonds" style="padding: 10px; flex: 1; background: #000; color: cyan; border: 1px solid cyan; font-family: 'Orbitron'; cursor: pointer; font-weight: bold;">SELL ALL BONDS</button>
+                <button id="btn-sell-stocks" style="padding: 10px; flex: 1; background: #000; color: purple; border: 1px solid purple; font-family: 'Orbitron'; cursor: pointer; font-weight: bold;">SELL ALL STOCKS</button>
             </div>
 
             <button id="btn-close-invest" style="padding: 10px 30px; background: #444; color: white; border: none; font-family: 'Orbitron'; cursor: pointer;">CLOSE</button>
@@ -942,7 +962,7 @@
     <!-- COLLEGE OVERLAY -->
     <div id="college-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); z-index: 77; flex-direction: column; justify-content: center; align-items: center; color: white;">
         <div id="college-card" style="background: #1a0a2e; border: 2px solid #aa44ff; padding: 30px; border-radius: 15px; text-align: center; min-width: 350px; box-shadow: 0 0 30px rgba(170, 68, 255, 0.4); pointer-events: auto;">
-            <h1 id="college-title" style="margin-top: 0; color: #aa44ff; font-size: 24px;">NEO-UNIVERSITY</h1>
+            <h1 id="college-title" style="margin-top: 0; color: #aa44ff; font-size: 24px;">UNIVERSITY</h1>
             <p id="college-description" style="font-size: 14px; margin-bottom: 20px; color: #ccAAff;">Advanced learning for the elite.</p>
             
             <div id="college-stats" style="text-align: left; margin: 15px 0; font-size: 14px; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px;">
