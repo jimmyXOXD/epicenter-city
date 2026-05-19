@@ -31,42 +31,42 @@
     "houses":"Suburban House",
     "description":"A standard 3-bedroom house with a small yard.",
     "level":5,
-    "cost (k)":600,
+    "cost (k)":2000,
     "popularity gained":4
   },
   {
     "houses":"Downtown Loft",
     "description":"A trendy, open-plan apartment in the city center.",
     "level":6,
-    "cost (k)":900,
+    "cost (k)":5000,
     "popularity gained":5
   },
   {
     "houses":"Luxury Condo",
     "description":"A high-rise apartment with a doorman and a view.",
     "level":7,
-    "cost (k)":1500,
+    "cost (k)":10000,
     "popularity gained":6
   },
   {
     "houses":"Mansion",
     "description":"A massive home with a pool and high walls.",
     "level":8,
-    "cost (k)":5000,
+    "cost (k)":50000,
     "popularity gained":7
   },
   {
     "houses":"Private Estate",
     "description":"A sprawling compound with security guards and acres of land.",
     "level":9,
-    "cost (k)":15000,
+    "cost (k)":100000,
     "popularity gained":8
   },
   {
     "houses":"Mega-Penthouse",
     "description":"The entire top floor of the city's tallest skyscraper.",
     "level":10,
-    "cost (k)":50000,
+    "cost (k)":500000,
     "popularity gained":10
   }
 ]
