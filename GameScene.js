@@ -20,6 +20,8 @@ export class GameScene {
         this.epicenters = [];
         this.generatedPoints = [];
         this.starterHousePosition = null; // Track the generated starter house coordinates
+        this.worldGenerationId = 0; // Used to ignore stale async generation callbacks
+        this.isLoadingSave = false;
         
         this.statsManager = new StatsManager(
             () => this.haveKid(),
@@ -460,7 +462,7 @@ export class GameScene {
                 z: 16
             };
             this.statsManager.showHomeUI(houseObj);
-        } else if (locationName === 'Neo-University') {
+        } else if (locationName === 'University') {
             if (this.statsManager.isCollegeActive) {
                 // 1. Get current stats and config
                 const talent = this.statsManager.stats.talent;
@@ -508,7 +510,7 @@ export class GameScene {
     }
 
     updateCollegeVisuals() {
-        const collegeBuilding = this.buildings.find(b => b.name === 'Neo-University');
+        const collegeBuilding = this.buildings.find(b => b.name === 'University');
         if (!collegeBuilding) return;
 
         if (this.statsManager.isCollegeActive) {
@@ -789,7 +791,7 @@ export class GameScene {
                          taskId = 'Gym';
                     } else if (point.type === 'SCHOOL') {
                          taskName = 'University';
-                         taskId = 'Neo-University';
+                         taskId = 'University';
                     }
 
                     // Add Task
@@ -850,11 +852,14 @@ export class GameScene {
     }
 
     handleLoadGame() {
+        if (this.isLoadingSave) return;
+        this.isLoadingSave = true;
+
         const loadedData = this.statsManager.loadGame();
         if (loadedData) {
             const worldData = loadedData.worldData || {};
             // If worldData is missing or malformed, fallback to defaults (empty array)
-            const epicenters = worldData.epicenters || []; 
+            const epicenters = worldData.epicenters || [];
             const points = worldData.points || null;
 
             // Clean scene and regenerate
@@ -899,6 +904,7 @@ export class GameScene {
             
             this.spawnFloatingText("✔ GAME LOADED", this.player.position, '#44ff44');
         }
+        this.isLoadingSave = false;
     }
 
     clearWorld() {
@@ -929,7 +935,8 @@ export class GameScene {
     }
 
     generateWorld(savedEpicenters = null, savedPoints = null) {
-        console.log("Generating world...", savedEpicenters ? "(From Save)" : "(Fresh)");
+        const generationId = ++this.worldGenerationId;
+        console.log("Generating world...", savedEpicenters ? "(From Save)" : "(Fresh)", `generationId=${generationId}`);
         
         // 1. Generate Epicenters
         if (savedEpicenters) {
@@ -1137,7 +1144,7 @@ export class GameScene {
             }
         }
 
-        this.renderInstancedBuildings(points);
+        this.renderInstancedBuildings(points, generationId);
     }
 
     assignBuildingTypes(points) {
@@ -1248,7 +1255,7 @@ export class GameScene {
             } else if (p.type === 'SCHOOL') {
                 // p.level = 1; // has no levels
                 p.color = { r: 1, g: 1, b: 1 };
-                p.name = "Neo-University";
+                p.name = "University";
             } else {
                 // p.level = 1; // has no levels
                 p.color = { r: 1, g: 1, b: 1 };
@@ -1258,7 +1265,7 @@ export class GameScene {
     }
 
 
-    renderInstancedBuildings(points) {
+    renderInstancedBuildings(points, generationId) {
         // --- 1. Create Baseplates for Jobs ---
         const jobPoints = points.filter(p => p.type === 'JOB');
         if (jobPoints.length > 0) {
@@ -1319,6 +1326,10 @@ export class GameScene {
 
         Object.entries(groups).forEach(([url, groupPoints]) => {
             textureLoader.load(url, (texture) => {
+                if (generationId !== this.worldGenerationId) {
+                    return;
+                }
+
                 texture.colorSpace = THREE.SRGBColorSpace;
                 
                 const aspect = texture.image.width / texture.image.height;
