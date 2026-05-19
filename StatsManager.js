@@ -164,7 +164,11 @@ export class StatsManager {
                 progress: this.business.progress,
                 isSeekingInvestors: this.business.isSeekingInvestors,
                 marketMultiplier: this.business.marketMultiplier,
-                marketTier: this.business.marketTier
+                marketTier: this.business.marketTier,
+                investorFundsReceived: this.business.investorFundsReceived || 0,
+                playerInitialInvestment: this.business.playerInitialInvestment || 0,
+                salesByStage: this.business.salesByStage,
+                operatingTimeMs: this.business.operatingTimeMs || 0
             } : null,
             timestamp: Date.now()
         };
@@ -247,6 +251,9 @@ export class StatsManager {
                 this.business.isSeekingInvestors = data.business.isSeekingInvestors;
                 this.business.marketMultiplier = data.business.marketMultiplier;
                 this.business.marketTier = data.business.marketTier;
+                this.business.salesByStage = data.business.salesByStage || Array(8).fill(0);
+                this.business.operatingTimeMs = data.business.operatingTimeMs || 0;
+                this.business.playerInitialInvestment = data.business.playerInitialInvestment || 0;
             } else {
                 this.business = null;
             }
@@ -449,13 +456,40 @@ export class StatsManager {
 
         if (startBtn) {
             startBtn.onclick = () => {
+                if (localStorage.getItem('EpicenterCity_Save')) {
+                    // Show warning modal
+                    const warning = document.getElementById('new-game-warning');
+                    if (warning) warning.style.display = 'flex';
+                } else {
+                    // No save exists, start directly
+                    fadeOutTheme();
+                    localStorage.removeItem('EpicenterCity_Save');
+                    this.isGameStarted = true;
+                    if (startScreen) startScreen.style.display = 'none';
+                    console.log("Game Started Fresh! Old lineage cleared.");
+                }
+            };
+        }
+
+        // New game warning modal buttons
+        const confirmBtn = document.getElementById('confirm-new-game');
+        if (confirmBtn) {
+            confirmBtn.onclick = () => {
+                const warning = document.getElementById('new-game-warning');
+                if (warning) warning.style.display = 'none';
                 fadeOutTheme();
-                // Clear any existing save data when starting a fresh game
                 localStorage.removeItem('EpicenterCity_Save');
-                
                 this.isGameStarted = true;
                 if (startScreen) startScreen.style.display = 'none';
                 console.log("Game Started Fresh! Old lineage cleared.");
+            };
+        }
+
+        const cancelBtn = document.getElementById('cancel-new-game');
+        if (cancelBtn) {
+            cancelBtn.onclick = () => {
+                const warning = document.getElementById('new-game-warning');
+                if (warning) warning.style.display = 'none';
             };
         }
 
@@ -590,6 +624,10 @@ export class StatsManager {
                         <span style="color: #44ff44;">${totalPay.toFixed(1)} K$</span>
                     </div>
                     <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 8px;">
+                        <span style="color: #ccc;">Lifetime Risk:</span>
+                        <span style="color: #ff4444;">${((job.risk || 0) * 100).toFixed(0)}%</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 8px;">
                         <span style="color: #ccc;">Current Job Rank:</span>
                         <span style="color: #ffff44;">${this.currentJobPromotions} / ${job.maxPromotions || 3}</span>
                     </div>
@@ -658,7 +696,7 @@ export class StatsManager {
             `;
             this.elements.btnCollegeAction.style.display = 'none';
         } else {
-            this.elements.collegeTitle.innerText = "NEO-UNIVERSITY";
+            this.elements.collegeTitle.innerText = "UNIVERSITY";
             this.elements.collegeDescription.innerText = "Advanced learning program. Boost your status and intellect.";
             this.elements.collegeStats.innerHTML = `
                 <div style="display: flex; justify-content: space-between;"><span>Tuition:</span> <span style="color: #ff4444;">${CONFIG.PLAYER.ECONOMY.TUITION_COST}K$</span></div>
@@ -669,19 +707,11 @@ export class StatsManager {
             const btn = this.elements.btnCollegeAction;
             btn.style.display = 'inline-block';
             btn.innerText = `ENROLL (${CONFIG.PLAYER.ECONOMY.TUITION_COST}K$)`;
-            
-            // Proactive Disabling
-            if (this.stats.money < CONFIG.PLAYER.ECONOMY.TUITION_COST) {
-                btn.disabled = true;
-                btn.style.opacity = '0.5';
-                btn.style.cursor = 'not-allowed';
-                btn.style.background = '#333';
-            } else {
-                btn.disabled = false;
-                btn.style.opacity = '1';
-                btn.style.cursor = 'pointer';
-                btn.style.background = ''; // Reset to default CSS
-            }
+
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+            btn.style.background = ''; // Reset to default CSS
             
             btn.onclick = () => {
                 if (this.stats.money >= CONFIG.PLAYER.ECONOMY.TUITION_COST) {
@@ -885,6 +915,11 @@ export class StatsManager {
         this.elements.closureOverlay.style.display = 'flex';
         this.elements.closureReason.innerText = `Reason: ${reason}`;
         
+        const playerRevenue = business.getPlayerRevenue();
+        const netExpenses = business.getNetExpenses();
+        const netProfit = business.getNetProfit();
+        const refundAmount = business.getRefundAmount();
+
         this.elements.closureStats.innerHTML = `
             <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
                 <span>Final Stage:</span> <span>${business.stage}</span>
@@ -893,7 +928,16 @@ export class StatsManager {
                 <span>Products Sold:</span> <span>${business.totalProductsSold}</span>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                <span>Remaining Capital:</span> <span style="color: ${business.investmentBank < 0 ? '#ff4444' : '#44ff44'}">${business.investmentBank.toFixed(2)}K$</span>
+                <span>Revenue (Your Share):</span> <span>${playerRevenue.toFixed(2)}K$</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <span>Expenses:</span> <span style="color: #ff4444;">${netExpenses.toFixed(2)}K$</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <span>Refundable Bank:</span> <span>${refundAmount.toFixed(2)}K$</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <span>Net Profit:</span> <span style="color: ${netProfit >= 0 ? '#44ff44' : '#ff4444'};">${netProfit.toFixed(2)}K$</span>
             </div>
             <div style="display: flex; justify-content: space-between;">
                 <span>Your Equity:</span> <span>${business.percentOwned.toFixed(1)}%</span>
@@ -1012,47 +1056,40 @@ export class StatsManager {
 
     triggerInvestorEvent() {
         // Investor gives coins for 10% equity
-        this.business.addCapital(CONFIG.BUSINESS.INVESTOR_GRANT);
+        this.business.addCapital(CONFIG.BUSINESS.INVESTOR_GRANT, false);
         this.business.diluteOwnership(CONFIG.BUSINESS.INVESTOR_EQUITY);
-        this.business.investorFundsReceived = (this.business.investorFundsReceived || 0) + CONFIG.BUSINESS.INVESTOR_GRANT;
         
-        // Remove alert, use floating div
         const dash = document.getElementById('business-dashboard');
         if (dash) {
             const floatDiv = document.createElement('div');
             floatDiv.style.cssText = `
                 color: #ffaa44;
                 text-shadow: 0 0 10px #ffaa44;
-                background: rgba(0,0,0,0.9);
+                background: rgba(0,0,0,0.95);
                 border: 2px solid #ffaa44;
                 padding: 15px;
                 text-align: center;
                 border-radius: 10px;
-                position: absolute;
+                position: fixed;
                 z-index: 9999;
                 pointer-events: none;
-                left: 50%;
-                top: -50px;
                 transform: translateX(-50%);
                 animation: floatUpFade 4s forwards;
-                width: 200px;
+                width: 220px;
                 font-family: 'Orbitron', sans-serif;
             `;
             floatDiv.innerHTML = `💰 INVESTOR FOUND!<br><span style="font-size:12px; color: #fff;">They invested 500K$ for 10% equity.</span>`;
-            
-            // The dashboard has relative positioning in CSS? If not, we might need to append to document body and calculate position
-            // But let's assume dashboard container is relative or we can position relative to it.
-            // Actually, dashboard is fixed in main.js usually. Let's append to body and center on screen or near dashboard.
-            // Safest: Append to dashboard and make sure dashboard has position relative or absolute.
-            // If dashboard doesn't have position, absolute will be relative to body or nearest positioned ancestor.
-            // Let's set dashboard position to relative just in case via JS if needed, but usually UI panels are fixed/absolute.
-            
-            // Appending to dashboard directly
-            if (getComputedStyle(dash).position === 'static') {
-                dash.style.position = 'relative';
+
+            const rect = dash.getBoundingClientRect();
+            const preferredTop = rect.top - 70;
+            if (preferredTop < 10) {
+                floatDiv.style.bottom = `${window.innerHeight - rect.bottom + 10}px`;
+            } else {
+                floatDiv.style.top = `${preferredTop}px`;
             }
-            dash.appendChild(floatDiv);
-            
+            floatDiv.style.left = `${rect.left + rect.width / 2}px`;
+
+            document.body.appendChild(floatDiv);
             setTimeout(() => {
                 floatDiv.remove();
             }, 4000);
@@ -1268,10 +1305,9 @@ export class StatsManager {
         document.getElementById('btn-close-invest').onclick = () => this.closeInvestModal();
         
         const slider = document.getElementById('invest-slider');
-        const display = document.getElementById('invest-amount-display');
         
         slider.oninput = () => {
-            display.innerText = parseFloat(slider.value).toFixed(2);
+            this.updateInvestUI();
         };
         
         document.getElementById('btn-buy-bonds').onclick = () => this.handleInvest('bonds', 'buy');
@@ -1294,6 +1330,7 @@ export class StatsManager {
     updateInvestUI() {
         const slider = document.getElementById('invest-slider');
         const display = document.getElementById('invest-amount-display');
+        const remainingCashDisplay = document.getElementById('remaining-cash-display');
         
         // Update slider max to current cash
         slider.max = Math.floor(this.stats.money);
@@ -1303,8 +1340,14 @@ export class StatsManager {
             slider.value = Math.floor(this.stats.money);
         }
         
+        const investAmount = parseFloat(slider.value) || 0;
+        const remainingCash = Math.max(0, this.stats.money - investAmount);
+        
         // Always update display to match current slider value
-        display.innerText = Math.floor(parseFloat(slider.value));
+        display.innerText = investAmount.toFixed(2);
+        if (remainingCashDisplay) {
+            remainingCashDisplay.innerText = remainingCash.toFixed(2);
+        }
 
         const netWorth = this.stats.money + (this.stats.bonds || 0) + (this.stats.stocks || 0);
         
@@ -1464,8 +1507,10 @@ export class StatsManager {
 
         const job = this.getJobData(this.currentJobName);
         const resultText = document.getElementById('job-result');
+        const playerPopularity = this.getEffectivePopularity();
+        const requiredPopularity = job.reqPopularity || 0;
 
-        if (this.stats.popularity >= (job.reqPopularity || 0)) {
+        if (playerPopularity >= requiredPopularity) {
             resultText.innerText = "Accepted! You are now hired.";
             resultText.style.color = '#44ff44';
             
@@ -1626,7 +1671,7 @@ export class StatsManager {
         const dt = deltaTime * this.gameSpeed;
 
         // --- LIFETIME STATS TRACKING ---
-        this.lifetimeMaxStats.money = Math.max(this.lifetimeMaxStats.money, this.stats.money);
+        this.lifetimeMaxStats.money = Math.max(this.lifetimeMaxStats.money, this.stats.money + (this.stats.bonds || 0) + (this.stats.stocks || 0));
         this.lifetimeMaxStats.popularity = Math.max(this.lifetimeMaxStats.popularity, this.getEffectivePopularity());
         this.lifetimeMaxStats.beauty = Math.max(this.lifetimeMaxStats.beauty, this.stats.beauty);
         this.lifetimeMaxStats.talent = Math.max(this.lifetimeMaxStats.talent, this.stats.talent);
@@ -1989,7 +2034,7 @@ export class StatsManager {
     }
 
     generatePerson(screening = 0) {
-        const names = ["Alex", "Jordan", "Casey", "Morgan", "Taylor", "Riley", "Quinn"];
+        const names = ["Alex", "Jordan", "Avery", "Morgan", "Taylor", "Riley", "Kai"];
         
         // Mean centered around screening/3
         const mean = screening / 3;
@@ -2384,7 +2429,7 @@ export class StatsManager {
                     NO ACTIVE VENTURE
                 </div>
                 <div class="dash-info" style="text-align: center; margin-bottom: 10px;">
-                    Start a tech startup to earn passive income and build an empire.
+                    Start a business to earn passive income and build an empire.
                 </div>
                 <button class="dash-btn" id="dash-btn-start" style="${btnStyle}" ${disabledAttr}>Start Business (${CONFIG.PLAYER.ECONOMY.START_BUSINESS_COST}K$)</button>
             `;
@@ -2577,7 +2622,7 @@ export class StatsManager {
                 } else if (isPopularity) {
                     const totalPop = this.getEffectivePopularity();
                     const bonus = totalPop - this.stats.popularity;
-                    label.innerText = `POPULARITY (${Math.floor(totalPop)}) ${bonus > 0 ? `(+${bonus.toFixed(1)} Network)` : ''}`;
+                    label.innerText = `POPULARITY (${Math.floor(totalPop)})`;
                 } else if (isTalent) {
                     label.innerText = `TALENT (${Math.floor(value)})`;
                 }
@@ -2586,11 +2631,11 @@ export class StatsManager {
     }
 
     calculateFinalScore() {
-        let level10Price = 50000;
+        let level10Price = 500000;
         if (registry && registry.houses) {
              const house = registry.houses.find(h => h.level === 10);
              // Check for 'price' (if mapped) or fallback to the raw JSON 'cost (k)'
-             if (house) level10Price = house.price || house['cost (k)'] || 50000;
+             if (house) level10Price = house.price || house['cost (k)'] || 500000;
         }
         
         const normalizedMoney = Math.min(100, (this.lifetimeMaxStats.money / level10Price) * 100);
